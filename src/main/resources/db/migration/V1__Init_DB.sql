@@ -34,8 +34,8 @@ create table workspace_user (
     userid varchar(255) not null,
     workspaceid varchar(255) not null,
     created_at timestamp,
-    token text,
-    username varchar(255),
+    token text not null,
+    username varchar(255) not null,
     workspace_id varchar(255) not null,
     primary key (userid, workspaceid)
 );

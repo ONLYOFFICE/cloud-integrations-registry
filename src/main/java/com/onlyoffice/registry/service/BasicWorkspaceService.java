@@ -48,7 +48,6 @@ public class BasicWorkspaceService implements WorkspaceService {
         try {
             this.workspaceRepository.save(workspace);
         } catch (Exception e) {
-            log.error(e.getMessage());
             throw new RuntimeException("Could not save workspace with this parameters set");
         }
 

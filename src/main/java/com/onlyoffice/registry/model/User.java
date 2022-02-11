@@ -18,7 +18,9 @@ import java.time.LocalDateTime;
 public class User {
     @EmbeddedId
     private UserID id;
+    @Column(nullable = false)
     private String username;
+    @Column(nullable = false)
     private String token;
     private LocalDateTime createdAt;
     @ManyToOne(fetch = FetchType.EAGER)
