@@ -1,0 +1,58 @@
+version: '3.7'
+services:
+  database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: oregistry,keycloak
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./pg_scripts:/docker-entrypoint-initdb.d
+    networks:
+      backend:
+        aliases:
+          - "postgres"
+  adminer:
+    image: adminer:latest
+    restart: always
+    depends_on:
+      - database
+    ports:
+      - 8080:8080
+    networks:
+      backend:
+        aliases:
+          - "adminer"
+  keycloak:
+    image: jboss/keycloak:14.0.0
+    restart: always
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: database:5432
+      DB_DATABASE: keycloak
+      DB_USER: ${DB_USER}
+      DB_SCHEMA: public
+      DB_PASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_USER: ${KEYCLOAK_USER}
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
+      PROXY_ADDRESS_FORWARDING: 'true'
+    depends_on:
+      - database
+    ports:
+      - 9080:8080
+    networks:
+      backend:
+        aliases:
+          - "keycloak"
+
+networks:
+  backend:
+    driver: bridge

@@ -1,0 +1,10 @@
+resilience4j.ratelimiter:
+  instances:
+    registryLimiter:
+      timeoutDuration: 1000ms
+      limitRefreshPeriod: 1500ms
+      limitForPeriod: 1000
+    workspaceTypeLimiter:
+      timeoutDuration: 1000ms
+      limitRefreshPeriod: 1500ms
+      limitForPeriod: 10000
