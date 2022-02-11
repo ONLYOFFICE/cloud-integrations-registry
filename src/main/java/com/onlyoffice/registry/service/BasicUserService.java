@@ -27,13 +27,13 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
     public UserDTO saveUser(String workspaceID, UserDTO user) {
+        Workspace workspace = this.basicWorkspaceService.getWorkspace(workspaceID);
         User u = UserMapper.INSTANCE.toEntity(user);
+        u.getId().setWorkspaceID(workspaceID);
         if(this.userRepository.findById(u.getId()).isPresent())
             throw new RuntimeException("Could not save: User with this id already exists");
-        log.debug("trying to save a new user with workspace id = {} and user id = {}", workspaceID, user.getId());
-        Workspace workspace = this.basicWorkspaceService.getWorkspace(workspaceID);
-        u.getId().setWorkspaceID(workspaceID);
         u.setWorkspace(workspace);
+        log.debug("trying to save a new user with workspace id = {} and user id = {}", workspaceID, user.getId());
         this.userRepository.save(u);
         return user;
     }
