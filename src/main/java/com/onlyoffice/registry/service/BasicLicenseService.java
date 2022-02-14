@@ -1,6 +1,7 @@
 package com.onlyoffice.registry.service;
 
-import com.onlyoffice.registry.dto.WorkspaceDTO;
+import com.onlyoffice.registry.dto.LicenseDTO;
+import com.onlyoffice.registry.mapper.LicenseMapper;
 import com.onlyoffice.registry.model.License;
 import com.onlyoffice.registry.model.embeddable.LicenseCredentials;
 import com.onlyoffice.registry.repository.LicenseRepository;
@@ -22,17 +23,13 @@ public class BasicLicenseService implements LicenseService {
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
-    public void saveLicense(WorkspaceDTO workspace) {
-        log.debug("trying to update license. Workspace id: {}", workspace.getId());
+    public void saveLicense(String workspaceID, LicenseDTO licenseDTO) {
+        log.debug("trying to update license. Workspace id: {}", workspaceID);
         License license = this.licenseRepository
-                .findLicenseByWorkspaceId(workspace.getId())
+                .findLicenseByWorkspaceId(workspaceID)
                 .orElseThrow(() -> new RuntimeException("Could not save: license with this workspace id does not exist"));
-        license.setCredentials(LicenseCredentials
-                .builder()
-                .header(workspace.getServerHeader())
-                .secret(workspace.getServerSecret())
-                .url(workspace.getServerUrl())
-                .build());
+        LicenseCredentials credentials = LicenseMapper.INSTANCE.toEntity(licenseDTO);
+        license.setCredentials(credentials);
     }
 
     @Override

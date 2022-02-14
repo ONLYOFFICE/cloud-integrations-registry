@@ -1,6 +1,7 @@
 package com.onlyoffice.registry.jpa;
 
 import com.onlyoffice.registry.RegistryApplicationTests;
+import com.onlyoffice.registry.dto.LicenseDTO;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
 import com.onlyoffice.registry.service.BasicLicenseService;
 import com.onlyoffice.registry.service.BasicWorkspaceService;
@@ -50,12 +51,12 @@ public class LicenseTests extends RegistryApplicationTests {
     @Test
     public void testSaveLicense() {
         this.licenseService.saveLicense(
-                WorkspaceDTO
+                workspaceID,
+                LicenseDTO
                         .builder()
-                        .id(workspaceID)
-                        .serverHeader(licenseHeader)
-                        .serverSecret(licenseSecret)
                         .serverUrl(licenseUrl)
+                        .serverSecret(licenseSecret)
+                        .serverHeader(licenseHeader)
                         .build()
         );
     }
@@ -63,12 +64,12 @@ public class LicenseTests extends RegistryApplicationTests {
     @Test
     public void testOrphanRemoval() {
         this.licenseService.saveLicense(
-                WorkspaceDTO
+                workspaceID,
+                LicenseDTO
                         .builder()
-                        .id(workspaceID)
-                        .serverHeader(licenseHeader)
-                        .serverSecret(licenseSecret)
                         .serverUrl(licenseUrl)
+                        .serverSecret(licenseSecret)
+                        .serverHeader(licenseHeader)
                         .build()
         );
         this.workspaceService.deleteWorkspace(workspaceID);

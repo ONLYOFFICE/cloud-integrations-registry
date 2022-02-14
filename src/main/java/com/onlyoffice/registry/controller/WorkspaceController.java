@@ -1,11 +1,8 @@
 package com.onlyoffice.registry.controller;
 
-import com.onlyoffice.registry.dto.DemoInfoDTO;
 import com.onlyoffice.registry.dto.GenericResponseDTO;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
 import com.onlyoffice.registry.mapper.WorkspaceMapper;
-import com.onlyoffice.registry.service.DemoService;
-import com.onlyoffice.registry.service.LicenseService;
 import com.onlyoffice.registry.service.WorkspaceService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,36 +24,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @Slf4j
 public class WorkspaceController {
     private WorkspaceService workspaceService;
-    private LicenseService licenseService;
-    private DemoService demoService;
-    @Autowired
-    public WorkspaceController(WorkspaceService workspaceService, LicenseService licenseService, DemoService demoService) {
-        this.workspaceService = workspaceService;
-        this.licenseService = licenseService;
-        this.demoService = demoService;
-    }
 
-    @GetMapping(path = "/{workspaceID}/demo")
-    public ResponseEntity<DemoInfoDTO> checkDemo(
-            @PathVariable("workspaceID") String workspaceID
-    ) {
-        log.debug("call to check demo with workspace id: {}", workspaceID);
-        return ResponseEntity.ok(this.demoService.getDemoInfo(workspaceID));
-    }
-    
-    @PostMapping(path = "/{workspaceID}/demo")
-    public ResponseEntity<GenericResponseDTO> startDemo(
-            @PathVariable("workspaceID") String workspaceID
-    ) {
-        log.debug("call to create demo with workspace id: {}", workspaceID);
-        this.demoService.createDemo(workspaceID);
-        return ResponseEntity.ok(
-                GenericResponseDTO
-                        .builder()
-                        .message("Demo has been created")
-                        .success(true)
-                        .build()
-        );
+    @Autowired
+    public WorkspaceController(WorkspaceService workspaceService) {
+        this.workspaceService = workspaceService;
     }
 
     @GetMapping(path = "/{workspaceID}")
@@ -79,24 +50,6 @@ public class WorkspaceController {
         );
 
         return ResponseEntity.ok(workspaceDTO);
-    }
-
-    @PostMapping(path = "/{workspaceID}/license")
-    public ResponseEntity<GenericResponseDTO> updateLicenseCredentials(
-            @PathVariable("workspaceID") String workspaceID,
-            @Valid @RequestBody WorkspaceDTO body
-    ) {
-        log.debug("call to update workspace={} license", workspaceID);
-        if (!body.getId().equals(workspaceID))
-            throw new RuntimeException("Could not save: mismatching id parameters to update license");
-        this.licenseService.saveLicense(body);
-        return ResponseEntity.ok(
-                GenericResponseDTO
-                        .builder()
-                        .success(true)
-                        .message("Workspace license credentials have been updated")
-                        .build()
-        );
     }
     
     @PostMapping
