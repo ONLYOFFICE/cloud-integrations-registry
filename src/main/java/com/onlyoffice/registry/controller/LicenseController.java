@@ -31,6 +31,7 @@ public class LicenseController {
 
     @GetMapping(path = "/demo")
     public ResponseEntity<DemoInfoDTO> checkDemo(
+            @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID
     ) {
         log.debug("call to check demo with workspace id: {}", workspaceID);
@@ -39,6 +40,7 @@ public class LicenseController {
 
     @PostMapping(path = "/demo")
     public ResponseEntity<GenericResponseDTO> startDemo(
+            @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID
     ) {
         log.debug("call to create demo with workspace id: {}", workspaceID);
@@ -54,10 +56,11 @@ public class LicenseController {
 
     @PostMapping(path = "/license")
     public ResponseEntity<GenericResponseDTO> updateLicenseCredentials(
+            @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID,
             @Valid @RequestBody LicenseDTO body
     ) {
-        log.debug("call to update workspace={} license", workspaceID);
+        log.debug("call to update {} workspace={} license", workspaceTypeName, workspaceID);
         this.licenseService.saveLicense(workspaceID, body);
         return ResponseEntity.ok(
                 GenericResponseDTO

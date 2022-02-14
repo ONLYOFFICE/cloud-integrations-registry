@@ -23,7 +23,7 @@ public class WorkspaceTypeInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         final Map<String, String> pathVariables = (Map<String, String>) request
                 .getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-        Boolean shouldFilter = pathVariables.containsKey("workspaceTypeName")
+        Boolean shouldFilter = pathVariables != null && pathVariables.containsKey("workspaceTypeName")
                 && pathVariables.containsKey("workspaceID");
         if (shouldFilter) {
             Workspace workspace = this.workspaceService.getWorkspace(pathVariables.get("workspaceID"));

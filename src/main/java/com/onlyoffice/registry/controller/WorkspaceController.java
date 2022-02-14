@@ -23,7 +23,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @PreAuthorize("hasRole(#workspaceTypeName) or hasRole(@DynamicRoles.getRootRole())")
 @Slf4j
 public class WorkspaceController {
-    private WorkspaceService workspaceService;
+    private final WorkspaceService workspaceService;
 
     @Autowired
     public WorkspaceController(WorkspaceService workspaceService) {
