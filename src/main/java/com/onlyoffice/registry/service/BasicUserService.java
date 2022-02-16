@@ -8,6 +8,8 @@ import com.onlyoffice.registry.model.embeddable.UserID;
 import com.onlyoffice.registry.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,7 @@ public class BasicUserService implements UserService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 3)
+    @Cacheable("users")
     public UserDTO getUser(String userID, String workspaceID) {
         log.debug("trying to get user with workspace id = {} and user id = {}", workspaceID, userID);
         UserID id = UserID
@@ -55,6 +58,7 @@ public class BasicUserService implements UserService {
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
+    @CacheEvict("users")
     public void deleteUser(String userID, String workspaceID) {
         log.debug("trying to delete user with workspace id = {} and user id = {}", workspaceID, userID);
         UserID id = UserID
