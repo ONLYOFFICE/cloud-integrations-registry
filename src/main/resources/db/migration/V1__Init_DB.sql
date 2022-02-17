@@ -30,7 +30,7 @@ create table workspace_user (
     workspace_id varchar(255) not null,
     workspace_type varchar(255) not null,
     username varchar(255) not null,
-    token varchar(255) not null,
+    token text not null,
     created_at timestamp,
     primary key (id)
 );
