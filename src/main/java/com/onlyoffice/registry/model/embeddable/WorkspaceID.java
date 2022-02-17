@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
 
@@ -13,7 +14,9 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserID implements Serializable {
-    private String userID;
-    private String workspaceID;
+public class WorkspaceID implements Serializable {
+    @Column(name = "workspace_id", nullable = false)
+    private String workspaceId;
+    @Column(name = "workspace_type", nullable = false)
+    private String workspaceType;
 }

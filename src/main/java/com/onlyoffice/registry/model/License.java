@@ -20,8 +20,6 @@ public class License {
     @GeneratedValue(generator = "uuid")
     private String id;
     private LicenseCredentials credentials;
-    @OneToOne(mappedBy = "license")
-    private Workspace workspace;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

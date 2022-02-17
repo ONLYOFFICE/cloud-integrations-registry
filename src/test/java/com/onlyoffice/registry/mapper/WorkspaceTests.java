@@ -3,6 +3,7 @@ package com.onlyoffice.registry.mapper;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
 import com.onlyoffice.registry.model.*;
 import com.onlyoffice.registry.model.embeddable.LicenseCredentials;
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,11 +14,6 @@ import java.util.UUID;
 public class WorkspaceTests {
     @Test
     public void shouldConvertToDTO() {
-        WorkspaceType workspaceType = new WorkspaceType();
-        workspaceType.setId(1);
-        workspaceType.setName("workspace-test");
-        workspaceType.setCreatedAt(LocalDateTime.now());
-
         License license = new License();
         license.setId(UUID.randomUUID().toString());
         LicenseCredentials credentials = LicenseCredentials
@@ -29,14 +25,13 @@ public class WorkspaceTests {
         license.setCredentials(credentials);
 
         Workspace workspace = new Workspace();
-        workspace.setType(workspaceType);
         workspace.setLicense(license);
-        workspace.setId(UUID.randomUUID().toString());
+        workspace.setId(new WorkspaceID("dev", "dev"));
         workspace.setCreatedAt(LocalDateTime.now());
 
         WorkspaceDTO workspaceDTO = WorkspaceMapper.INSTANCE.toDTO(workspace);
 
-        assertEquals(workspaceDTO.getId(), workspace.getId());
+        assertEquals(workspaceDTO.getId(), workspace.getId().getWorkspaceId());
         assertEquals(workspaceDTO.getServerHeader(), workspace.getLicense().getCredentials().getHeader());
         assertEquals(workspaceDTO.getServerSecret(), workspace.getLicense().getCredentials().getSecret());
         assertEquals(workspaceDTO.getServerUrl(), workspace.getLicense().getCredentials().getUrl());
@@ -54,7 +49,7 @@ public class WorkspaceTests {
 
         Workspace workspace = WorkspaceMapper.INSTANCE.toEntity(workspaceDTO);
 
-        assertEquals(workspace.getId(), workspaceDTO.getId());
+        assertEquals(workspace.getId().getWorkspaceId(), workspaceDTO.getId());
         assertEquals(workspace.getLicense().getCredentials().getUrl(), workspaceDTO.getServerUrl());
         assertEquals(workspace.getLicense().getCredentials().getSecret(), workspaceDTO.getServerSecret());
         assertEquals(workspace.getLicense().getCredentials().getUrl(), workspaceDTO.getServerUrl());

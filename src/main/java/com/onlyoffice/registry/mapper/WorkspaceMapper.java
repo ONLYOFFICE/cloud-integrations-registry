@@ -13,10 +13,12 @@ public interface WorkspaceMapper {
     @Mapping(source = "workspace.license.credentials.url", target = "serverUrl")
     @Mapping(source = "workspace.license.credentials.header", target = "serverHeader")
     @Mapping(source = "workspace.license.credentials.secret", target = "serverSecret")
+    @Mapping(source = "workspace.id.workspaceId", target = "id")
     WorkspaceDTO toDTO(Workspace workspace);
 
     @Mapping(source = "workspace.serverUrl", target = "license.credentials.url")
     @Mapping(source = "workspace.serverHeader", target = "license.credentials.header")
     @Mapping(source = "workspace.serverSecret", target = "license.credentials.secret")
+    @Mapping(source = "workspace.id", target = "id.workspaceId")
     Workspace toEntity(WorkspaceDTO workspace);
 }

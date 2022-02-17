@@ -1,7 +1,9 @@
 package com.onlyoffice.registry.repository;
 
 import com.onlyoffice.registry.model.Workspace;
-import org.springframework.data.repository.CrudRepository;
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface WorkspaceRepository extends CrudRepository<Workspace, String> {
+public interface WorkspaceRepository extends JpaRepository<Workspace, WorkspaceID> {
+    void deleteAllByIdWorkspaceType(String workspaceType);
 }

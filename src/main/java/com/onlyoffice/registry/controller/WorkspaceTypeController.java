@@ -1,68 +1,30 @@
 package com.onlyoffice.registry.controller;
 
 import com.onlyoffice.registry.dto.GenericResponseDTO;
-import com.onlyoffice.registry.dto.WorkspaceTypeDTO;
-import com.onlyoffice.registry.mapper.WorkspaceTypeMapper;
-import com.onlyoffice.registry.service.WorkspaceTypeService;
+import com.onlyoffice.registry.service.WorkspaceService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("v1/workspace-type")
 @RateLimiter(name = "workspaceTypeLimiter")
+@AllArgsConstructor
 @Slf4j
 public class WorkspaceTypeController {
-    private WorkspaceTypeService workspaceTypeService;
-    @Autowired
-    public WorkspaceTypeController(WorkspaceTypeService workspaceTypeService) {
-        this.workspaceTypeService = workspaceTypeService;
-    }
+    private final WorkspaceService workspaceService;
 
-    @GetMapping
-    public ResponseEntity<List<WorkspaceTypeDTO>> getWorkspaceTypes() {
-        log.debug("call to get workspace types");
-        List<WorkspaceTypeDTO> workspaceTypes = WorkspaceTypeMapper.INSTANCE
-                .toListDTO(this.workspaceTypeService.getWorkspaceTypes());
-        return ResponseEntity.ok(workspaceTypes);
-    }
-
-    @GetMapping(path = "/{name}")
-    public ResponseEntity<WorkspaceTypeDTO> getWorkspaceTypeByName(
-            @PathVariable("name") String name
-    ) {
-        log.debug("call to get workspace type with name: {}", name);
-        WorkspaceTypeDTO workspaceType = WorkspaceTypeMapper.INSTANCE
-                .toDTO(this.workspaceTypeService.getWorkspaceType(name));
-        return ResponseEntity.ok(workspaceType);
-    }
-
-    @PostMapping
-    public ResponseEntity<GenericResponseDTO> createWorkspaceType(
-            @Valid @RequestBody WorkspaceTypeDTO workspace
-    ) {
-        log.debug("call to create workspace type with name: {}", workspace.getName());
-        this.workspaceTypeService.createWorkspaceType(workspace.getName());
-        return ResponseEntity.ok(
-                GenericResponseDTO
-                        .builder()
-                        .message("Workspace type has been created")
-                        .success(true)
-                        .build()
-        );
-    }
-
-    @DeleteMapping(path = "/{name}")
+    @DeleteMapping(path = "/{workspaceTypeName}")
     public ResponseEntity<GenericResponseDTO> deleteWorkspaceType(
-            @PathVariable("name") String name
+            @PathVariable("workspaceTypeName") String workspaceTypeName
     ) {
-        log.debug("call to delete workspace type with name: {}", name);
-        this.workspaceTypeService.deleteWorkspaceType(name);
+        log.debug("call to delete workspace type with name: {}", workspaceTypeName);
+        this.workspaceService.deleteAllWorkspacesByType(workspaceTypeName);
         return ResponseEntity.ok(
                 GenericResponseDTO
                         .builder()

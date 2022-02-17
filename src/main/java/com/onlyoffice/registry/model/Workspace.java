@@ -1,5 +1,6 @@
 package com.onlyoffice.registry.model;
 
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,18 +11,16 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class Workspace {
-    @Id
-    private String id;
+    @EmbeddedId
+    private WorkspaceID id;
     @OneToOne(
             fetch = FetchType.EAGER,
             orphanRemoval = true,
-            cascade = CascadeType.ALL
+            cascade = CascadeType.ALL,
+            optional = false
     )
     @JoinColumn(name = "license_id")
     private License license;
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "type_id", nullable = false)
-    private WorkspaceType type;
     private LocalDateTime createdAt;
 
     @PrePersist

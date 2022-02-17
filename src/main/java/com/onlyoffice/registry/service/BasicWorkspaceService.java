@@ -3,9 +3,10 @@ package com.onlyoffice.registry.service;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
 import com.onlyoffice.registry.mapper.WorkspaceMapper;
 import com.onlyoffice.registry.model.Workspace;
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.repository.WorkspaceRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -13,56 +14,49 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@AllArgsConstructor
 @Slf4j
 public class BasicWorkspaceService implements WorkspaceService {
-    private WorkspaceRepository workspaceRepository;
-    private BasicWorkspaceTypeService basicWorkspaceTypeService;
+    private final WorkspaceRepository workspaceRepository;
 
-    @Autowired
-    public BasicWorkspaceService(WorkspaceRepository workspaceRepository, BasicWorkspaceTypeService basicWorkspaceTypeService) {
-        this.workspaceRepository = workspaceRepository;
-        this.basicWorkspaceTypeService = basicWorkspaceTypeService;
-    }
-
-    @Override
     @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 3)
     @Cacheable("workspaces")
-    public Workspace getWorkspace(String workspaceID) {
-        log.debug("trying to get workspace with id: {}", workspaceID);
-        return this.workspaceRepository
+    public WorkspaceDTO getWorkspace(WorkspaceID workspaceID) {
+        log.debug("trying to get workspace of type: {} with id: {}", workspaceID.getWorkspaceType(), workspaceID.getWorkspaceId());
+        return WorkspaceMapper.INSTANCE.toDTO(this.workspaceRepository
                 .findById(workspaceID)
-                .orElseThrow(() -> new RuntimeException("Could not get: Workspace with this id/type does not exist"));
+                .orElseThrow(() -> new RuntimeException("Could not get: Workspace with this id and type does not exist")));
     }
 
-    @Override
     @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
     public WorkspaceDTO saveWorkspace(String workspaceTypeName, WorkspaceDTO workspaceDTO) {
         log.debug("trying to save workspace of type = {} with id = {}", workspaceTypeName, workspaceDTO.getId());
         Workspace workspace = WorkspaceMapper.INSTANCE.toEntity(workspaceDTO);
-
-        if (this.workspaceRepository.findById(workspace.getId()).isPresent())
-            throw new RuntimeException("Could not save: Workspace already exists");
-
-        workspace.setType(this.basicWorkspaceTypeService.getWorkspaceType(workspaceTypeName));
-
-        try {
-            this.workspaceRepository.save(workspace);
-        } catch (Exception e) {
-            throw new RuntimeException("Could not save workspace with this parameters set");
-        }
-
+        workspace.getId().setWorkspaceType(workspaceTypeName);
+        if (this.workspaceRepository.existsById(workspace.getId()))
+            throw new RuntimeException("Could not save: Workspace with this id and workspace type already exists");
+        this.workspaceRepository.save(workspace);
         return workspaceDTO;
     }
 
-    @Override
     @Transactional(timeout = 3)
     @CacheEvict("workspaces")
-    public void deleteWorkspace(String workspaceID) {
+    public void deleteWorkspace(WorkspaceID workspaceID) {
+        log.debug("trying to delete workspace of type: {} with id: {}", workspaceID.getWorkspaceType(), workspaceID.getWorkspaceId());
         try {
-            log.debug("trying to delete workspace with id = {}", workspaceID);
             this.workspaceRepository.deleteById(workspaceID);
         } catch (Exception e) {
-            throw new RuntimeException("Could not delete: Workspace with this id does not exist");
+            throw new RuntimeException("Could not delete: Workspace with this id and workspace type does not exist");
+        }
+    }
+
+    @Transactional(timeout = 3)
+    @CacheEvict("workspaces")
+    public void deleteAllWorkspacesByType(String workspaceTypeName) {
+        try {
+            this.workspaceRepository.deleteAllByIdWorkspaceType(workspaceTypeName);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Could not delete all workspaces of type "+workspaceTypeName);
         }
     }
 }

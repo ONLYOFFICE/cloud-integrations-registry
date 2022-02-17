@@ -2,11 +2,11 @@ package com.onlyoffice.registry.controller;
 
 import com.onlyoffice.registry.dto.GenericResponseDTO;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
-import com.onlyoffice.registry.mapper.WorkspaceMapper;
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.service.WorkspaceService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +21,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping(path = "v1/workspace/{workspaceTypeName}")
 @RateLimiter(name = "registryLimiter")
 @PreAuthorize("hasRole(#workspaceTypeName) or hasRole(@DynamicRoles.getRootRole())")
+@AllArgsConstructor
 @Slf4j
 public class WorkspaceController {
     private final WorkspaceService workspaceService;
-
-    @Autowired
-    public WorkspaceController(WorkspaceService workspaceService) {
-        this.workspaceService = workspaceService;
-    }
 
     @GetMapping(path = "/{workspaceID}")
     public ResponseEntity<WorkspaceDTO> getWorkspace(
@@ -36,9 +32,7 @@ public class WorkspaceController {
             @PathVariable("workspaceID") String workspaceID
     ) {
         log.debug("call to get workspace of type: {} with id: {}", workspaceTypeName, workspaceID);
-        WorkspaceDTO workspaceDTO = WorkspaceMapper
-                .INSTANCE
-                .toDTO(this.workspaceService.getWorkspace(workspaceID));
+        WorkspaceDTO workspaceDTO = this.workspaceService.getWorkspace(new WorkspaceID(workspaceID, workspaceTypeName));
 
         workspaceDTO.add(
                 linkTo(methodOn(WorkspaceController.class).getWorkspace(workspaceTypeName, workspaceID))
@@ -78,7 +72,7 @@ public class WorkspaceController {
             @PathVariable("workspaceID") String workspaceID
     ) {
         log.debug("call to delete workspace of type: {} with id: {}", workspaceTypeName, workspaceID);
-        this.workspaceService.deleteWorkspace(workspaceID);
+        this.workspaceService.deleteWorkspace(new WorkspaceID(workspaceID, workspaceTypeName));
         return ResponseEntity.ok(
                 GenericResponseDTO
                         .builder()

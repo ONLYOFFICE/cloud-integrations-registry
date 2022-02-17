@@ -1,14 +1,12 @@
 package com.onlyoffice.registry.model;
 
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -19,9 +17,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Demo implements Serializable {
-    @Id
-    private String id;
+    @EmbeddedId
+    @Column(updatable = false)
+    private WorkspaceID id;
+    @Column(updatable = false)
     private LocalDateTime createdAt;
+    @Column(updatable = false)
     private LocalDateTime expiresAt;
     @PrePersist
     void prePersist() {

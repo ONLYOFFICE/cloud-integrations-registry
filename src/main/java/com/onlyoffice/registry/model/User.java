@@ -1,7 +1,7 @@
 package com.onlyoffice.registry.model;
 
-import com.onlyoffice.registry.model.embeddable.UserID;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -14,17 +14,30 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "workspace_user")
+@Table(name = "workspace_user", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "workspace_user_id",
+                columnNames = { "user_id", "workspace_id", "workspace_type" }
+        )
+})
 public class User {
-    @EmbeddedId
-    private UserID id;
+    @Id
+    @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(generator = "uuid")
+    private String id;
+    @Column(name = "user_id", nullable = false)
+    private String userId;
     @Column(nullable = false)
     private String username;
     @Column(nullable = false)
     private String token;
+    @Column(updatable = false)
     private LocalDateTime createdAt;
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "workspace_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumns({
+            @JoinColumn(name = "workspace_id", referencedColumnName = "workspace_id"),
+            @JoinColumn(name = "workspace_type", referencedColumnName = "workspace_type")
+    })
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Workspace workspace;
 

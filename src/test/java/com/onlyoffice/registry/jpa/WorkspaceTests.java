@@ -2,16 +2,13 @@ package com.onlyoffice.registry.jpa;
 
 import com.onlyoffice.registry.RegistryApplicationTests;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.service.WorkspaceService;
-import com.onlyoffice.registry.service.WorkspaceTypeService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ActiveProfiles({"dev"})
 public class WorkspaceTests extends RegistryApplicationTests {
@@ -21,19 +18,7 @@ public class WorkspaceTests extends RegistryApplicationTests {
     private final String workspaceHeader = "header";
     private final String workspaceUrl = "https://example.com";
     @Autowired
-    private WorkspaceTypeService workspaceTypeService;
-    @Autowired
     private WorkspaceService workspaceService;
-
-    @BeforeEach
-    public void beforeEach() {
-        this.workspaceTypeService.createWorkspaceType(workspaceTypeName);
-    }
-
-    @AfterEach
-    public void afterEach() {
-        this.workspaceTypeService.deleteWorkspaceType(workspaceTypeName);
-    }
 
     @Test
     public void testSaveWorkspace() {
@@ -47,7 +32,8 @@ public class WorkspaceTests extends RegistryApplicationTests {
                         .serverUrl(workspaceUrl)
                         .build()
                 );
-        assertDoesNotThrow(() -> this.workspaceService.getWorkspace(workspaceID));
+        assertDoesNotThrow(() -> this.workspaceService.getWorkspace(new WorkspaceID(workspaceID, workspaceTypeName)));
+        this.workspaceService.deleteAllWorkspacesByType(workspaceTypeName);
     }
 
     @Test
@@ -62,8 +48,7 @@ public class WorkspaceTests extends RegistryApplicationTests {
                         .serverUrl(workspaceUrl)
                         .build()
         );
-        this.workspaceTypeService.deleteWorkspaceType(workspaceTypeName);
-        assertThrows(RuntimeException.class, () -> this.workspaceService.getWorkspace(workspaceID));
-        this.workspaceTypeService.createWorkspaceType(workspaceTypeName);
+        this.workspaceService.deleteAllWorkspacesByType(workspaceTypeName);
+        assertThrows(RuntimeException.class, () -> this.workspaceService.getWorkspace(new WorkspaceID(workspaceID, workspaceTypeName)).getId());
     }
 }

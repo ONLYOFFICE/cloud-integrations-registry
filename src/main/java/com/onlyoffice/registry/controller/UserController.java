@@ -2,10 +2,11 @@ package com.onlyoffice.registry.controller;
 
 import com.onlyoffice.registry.dto.GenericResponseDTO;
 import com.onlyoffice.registry.dto.UserDTO;
+import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.service.UserService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +20,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping(path = "v1/workspace/{workspaceTypeName}/{workspaceID}/user")
 @RateLimiter(name = "registryLimiter")
 @PreAuthorize("hasRole(#workspaceTypeName) or hasRole(@DynamicRoles.getRootRole())")
+@AllArgsConstructor
 @Slf4j
 public class UserController {
-    private UserService userService;
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    private final UserService userService;
 
     @GetMapping("/{userID}")
     public ResponseEntity<UserDTO> getUser(
@@ -34,7 +32,7 @@ public class UserController {
             @PathVariable("userID") String userID
     ) {
         log.debug("call to get user with id: {}", userID);
-        UserDTO user = this.userService.getUser(userID, workspaceID);
+        UserDTO user = this.userService.getUser(userID, new WorkspaceID(workspaceID, workspaceTypeName));
 
         user.add(
                 linkTo(methodOn(UserController.class).getUser(workspaceTypeName, workspaceID, userID))
@@ -55,7 +53,7 @@ public class UserController {
             @Valid @RequestBody UserDTO user
     ) {
         log.debug("call to create user with id: {}", user.getId());
-        UserDTO savedUser = this.userService.saveUser(workspaceID, user);
+        UserDTO savedUser = this.userService.saveUser(user, new WorkspaceID(workspaceID, workspaceTypeName));
 
         savedUser.add(
                 linkTo(methodOn(UserController.class).getUser(workspaceTypeName, workspaceID, user.getId()))
@@ -76,7 +74,7 @@ public class UserController {
             @PathVariable("userID") String userID
     ) {
         log.debug("call to delete user with id: {}", userID);
-        this.userService.deleteUser(userID, workspaceID);
+        this.userService.deleteUser(userID, new WorkspaceID(workspaceID, workspaceTypeName));
         return ResponseEntity.ok(
                 GenericResponseDTO
                         .builder()
