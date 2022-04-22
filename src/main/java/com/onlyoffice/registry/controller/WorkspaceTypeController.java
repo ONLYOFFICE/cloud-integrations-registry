@@ -2,7 +2,6 @@ package com.onlyoffice.registry.controller;
 
 import com.onlyoffice.registry.dto.GenericResponseDTO;
 import com.onlyoffice.registry.service.WorkspaceService;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("v1/workspace-type")
-@RateLimiter(name = "workspaceTypeLimiter")
 @RequiredArgsConstructor
 @Slf4j
 public class WorkspaceTypeController {
@@ -25,9 +23,8 @@ public class WorkspaceTypeController {
     public CompletableFuture<ResponseEntity<GenericResponseDTO>> deleteWorkspaceType(
             @PathVariable("workspaceTypeName") String workspaceTypeName
     ) {
-        log.debug("call to delete workspace type with name: {}", workspaceTypeName);
-
         return CompletableFuture.supplyAsync(() -> {
+            log.debug("call to delete workspace type with name: {}", workspaceTypeName);
             this.workspaceService.deleteAllWorkspacesByType(workspaceTypeName);
             return ResponseEntity.ok(
                     GenericResponseDTO

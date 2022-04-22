@@ -4,11 +4,13 @@ import com.onlyoffice.registry.dto.GenericResponseDTO;
 import com.onlyoffice.registry.dto.WorkspaceDTO;
 import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.service.WorkspaceService;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +24,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping(path = "v1/workspace/{workspaceTypeName}")
-@RateLimiter(name = "registryRateLimiter")
 @PreAuthorize("hasRole(#workspaceTypeName) or hasRole(@DynamicRoles.getRootRole())")
 @RequiredArgsConstructor
 @Slf4j
@@ -30,14 +31,16 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
 
     @GetMapping(path = "/{workspaceID}")
-    @TimeLimiter(name = "queryTimeoutLimiter", fallbackMethod = "getWorkspaceFallback")
     @Cacheable("workspaces")
+    @RateLimiter(name = "queryRateLimiter", fallbackMethod = "getWorkspaceRateFallback")
+    @TimeLimiter(name = "queryTimeoutLimiter", fallbackMethod = "getWorkspaceTimeoutFallback")
     public CompletableFuture<ResponseEntity<WorkspaceDTO>> getWorkspace(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID
     ) {
-        log.debug("call to get workspace of type: {} with id: {}", workspaceTypeName, workspaceID);
         return CompletableFuture.supplyAsync(() -> {
+            log.debug("call to get workspace of type: {} with id: {}", workspaceTypeName, workspaceID);
+
             WorkspaceDTO workspaceDTO = this.workspaceService.getWorkspace(new WorkspaceID(workspaceID, workspaceTypeName));
 
             workspaceDTO.add(
@@ -53,28 +56,41 @@ public class WorkspaceController {
         });
     }
 
-    public CompletableFuture<ResponseEntity<GenericResponseDTO>> getWorkspaceFallback(
+    public CompletableFuture<ResponseEntity<GenericResponseDTO>> getWorkspaceRateFallback(
             String workspaceTypeName,
             String workspaceID,
-            TimeoutException rnp
+            RequestNotPermitted e
     ) {
-        return CompletableFuture.completedFuture(ResponseEntity.badRequest()
-                .body(GenericResponseDTO.builder()
+        return CompletableFuture.completedFuture(new ResponseEntity<>(
+                GenericResponseDTO.builder()
                         .success(false)
-                        .message(workspaceTypeName + " workspace fetching timeout: " + workspaceID)
-                        .build()
-                )
-        );
+                        .message(e.getMessage())
+                        .build(),
+                HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    public CompletableFuture<ResponseEntity<GenericResponseDTO>> getWorkspaceTimeoutFallback(
+            String workspaceTypeName,
+            String workspaceID,
+            TimeoutException e
+    ) {
+        return CompletableFuture.completedFuture(new ResponseEntity<>(
+                GenericResponseDTO.builder()
+                        .success(false)
+                        .message(e.getMessage())
+                        .build(),
+                HttpStatus.REQUEST_TIMEOUT));
     }
     
     @PostMapping
+    @RateLimiter(name = "commandRateLimiter", fallbackMethod = "saveWorkspaceFallback")
     public CompletableFuture<ResponseEntity<WorkspaceDTO>> saveWorkspace(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @Valid @RequestBody WorkspaceDTO body
     ) {
-        log.debug("call to create workspace of type: {} with id: {}", workspaceTypeName, body.getId());
-
         return CompletableFuture.supplyAsync(() -> {
+            log.debug("call to create workspace of type: {} with id: {}", workspaceTypeName, body.getId());
+
             WorkspaceDTO savedWorkspace = this.workspaceService.saveWorkspace(workspaceTypeName, body);
 
             savedWorkspace.add(
@@ -90,14 +106,28 @@ public class WorkspaceController {
         });
     }
 
+    public CompletableFuture<ResponseEntity<GenericResponseDTO>> saveWorkspaceFallback(
+            String workspaceTypeName,
+            WorkspaceDTO body,
+            RequestNotPermitted e
+    ) {
+        return CompletableFuture.completedFuture(new ResponseEntity<>(
+                GenericResponseDTO.builder()
+                        .success(false)
+                        .message(e.getMessage())
+                        .build(),
+                HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
     @DeleteMapping(path = "/{workspaceID}")
+    @RateLimiter(name = "cleanupRateLimiter", fallbackMethod = "deleteWorkspaceFallback")
     public CompletableFuture<ResponseEntity<GenericResponseDTO>> deleteWorkspace(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID
     ) {
-        log.debug("call to delete workspace of type: {} with id: {}", workspaceTypeName, workspaceID);
-
         return CompletableFuture.supplyAsync(() -> {
+            log.debug("call to delete workspace of type: {} with id: {}", workspaceTypeName, workspaceID);
+
             this.workspaceService.deleteWorkspace(new WorkspaceID(workspaceID, workspaceTypeName));
             return ResponseEntity.ok(
                     GenericResponseDTO
@@ -107,5 +137,18 @@ public class WorkspaceController {
                             .build()
             );
         });
+    }
+
+    public CompletableFuture<ResponseEntity<GenericResponseDTO>> deleteWorkspaceFallback(
+            String workspaceTypeName,
+            String workspaceID,
+            RequestNotPermitted e
+    ) {
+        return CompletableFuture.completedFuture(new ResponseEntity<>(
+                GenericResponseDTO.builder()
+                        .success(false)
+                        .message(e.getMessage())
+                        .build(),
+                HttpStatus.SERVICE_UNAVAILABLE));
     }
 }

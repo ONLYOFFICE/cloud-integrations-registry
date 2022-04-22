@@ -1,5 +1,6 @@
 package com.onlyoffice.registry.service;
 
+import com.onlyoffice.registry.InvalidRegistryOperationException;
 import com.onlyoffice.registry.dto.LicenseDTO;
 import com.onlyoffice.registry.mapper.LicenseMapper;
 import com.onlyoffice.registry.model.License;
@@ -21,7 +22,11 @@ public class BasicLicenseService implements LicenseService {
 
     @Transactional(
             isolation = Isolation.SERIALIZABLE,
-            rollbackFor = {TransactionException.class, RuntimeException.class},
+            rollbackFor = {
+                    TransactionException.class,
+                    InvalidRegistryOperationException.class,
+                    RuntimeException.class
+            },
             timeout = 2
     )
     public void saveLicense(WorkspaceID id, LicenseDTO licenseDTO) {
@@ -33,8 +38,7 @@ public class BasicLicenseService implements LicenseService {
 
     @Transactional(
             isolation = Isolation.READ_UNCOMMITTED,
-            rollbackFor = {TransactionException.class},
-            timeout = 2
+            readOnly = true
     )
     public LicenseCredentials getLicense(WorkspaceID id) {
         log.debug("trying to get license. Workspace id = {}, workspace type = {}", id.getWorkspaceId(), id.getWorkspaceType());

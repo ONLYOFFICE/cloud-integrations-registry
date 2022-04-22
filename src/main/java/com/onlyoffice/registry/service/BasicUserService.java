@@ -1,5 +1,6 @@
 package com.onlyoffice.registry.service;
 
+import com.onlyoffice.registry.InvalidRegistryOperationException;
 import com.onlyoffice.registry.dto.UserDTO;
 import com.onlyoffice.registry.mapper.UserMapper;
 import com.onlyoffice.registry.model.User;
@@ -24,7 +25,11 @@ public class BasicUserService implements UserService {
 
     @Transactional(
             isolation = Isolation.SERIALIZABLE,
-            rollbackFor = {TransactionException.class, RuntimeException.class},
+            rollbackFor = {
+                    TransactionException.class,
+                    InvalidRegistryOperationException.class,
+                    RuntimeException.class
+            },
             timeout = 2
     )
     public UserDTO saveUser(UserDTO user, WorkspaceID workspaceID) {
@@ -35,39 +40,36 @@ public class BasicUserService implements UserService {
                 workspaceID.getWorkspaceId(), user.getId(), workspaceID.getWorkspaceType()
         );
         if (this.userRepository.existsByUserIdAndWorkspaceId(user.getId(), workspaceID))
-            throw new RuntimeException("Could not save: User with this id, workspace id and workspace type already exists");
+            throw new InvalidRegistryOperationException("Could not save: User with this id, workspace id and workspace type already exists");
         this.userRepository.save(u);
         return user;
     }
 
     @Transactional(
             isolation = Isolation.READ_UNCOMMITTED,
-            rollbackFor = {TransactionException.class},
-            timeout = 2
+            readOnly = true
     )
     @Cacheable("users")
     public UserDTO getUser(String userID, WorkspaceID workspaceID) {
         log.debug("trying to get user with workspace id = {} and user id = {}", workspaceID.getWorkspaceId(), userID);
         User user = this.userRepository
                 .findUserByUserIdAndWorkspaceId(userID, workspaceID)
-                .orElseThrow(() -> new RuntimeException("Could not get: User does not exist"));
-
+                .orElseThrow(() -> new InvalidRegistryOperationException("Could not get: User does not exist"));
         return UserMapper.INSTANCE.toDto(user);
     }
 
     @Transactional(
             isolation = Isolation.SERIALIZABLE,
-            rollbackFor = {TransactionException.class, RuntimeException.class},
+            rollbackFor = {
+                    TransactionException.class,
+                    InvalidRegistryOperationException.class,
+                    RuntimeException.class
+            },
             timeout = 3
     )
     @CacheEvict("users")
     public void deleteUser(String userID, WorkspaceID workspaceID) {
         log.debug("trying to delete user with workspace id = {} and user id = {}", workspaceID.getWorkspaceId(), userID);
-        try {
-            this.userRepository
-                    .deleteUserByUserIdAndWorkspaceId(userID, workspaceID);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Could not delete: User does not exist");
-        }
+        this.userRepository.deleteUserByUserIdAndWorkspaceId(userID, workspaceID);
     }
 }

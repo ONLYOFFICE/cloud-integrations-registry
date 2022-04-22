@@ -1,5 +1,6 @@
 package com.onlyoffice.registry.service;
 
+import com.onlyoffice.registry.InvalidRegistryOperationException;
 import com.onlyoffice.registry.dto.DemoInfoDTO;
 import com.onlyoffice.registry.model.Demo;
 import com.onlyoffice.registry.model.embeddable.WorkspaceID;
@@ -24,8 +25,7 @@ public class BasicDemoService implements DemoService {
 
     @Transactional(
             isolation = Isolation.READ_UNCOMMITTED,
-            rollbackFor = {TransactionException.class},
-            timeout = 2
+            readOnly = true
     )
     @Cacheable("demo")
     public DemoInfoDTO getDemoInfo(WorkspaceID id) {
@@ -47,7 +47,11 @@ public class BasicDemoService implements DemoService {
 
     @Transactional(
             isolation = Isolation.SERIALIZABLE,
-            rollbackFor = {TransactionException.class, RuntimeException.class},
+            rollbackFor = {
+                    TransactionException.class,
+                    InvalidRegistryOperationException.class,
+                    RuntimeException.class
+            },
             timeout = 2
     )
     @CacheEvict("demo")
@@ -57,11 +61,9 @@ public class BasicDemoService implements DemoService {
                 .builder()
                 .id(id)
                 .build();
-        try {
-            this.demoRepository.save(demo);
-            return demo;
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Could not create: demo already exists");
-        }
+        if (this.demoRepository.existsById(id))
+            throw new InvalidRegistryOperationException("Could not create: demo already exists");
+        this.demoRepository.save(demo);
+        return demo;
     }
 }
