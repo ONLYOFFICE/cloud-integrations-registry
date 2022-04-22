@@ -8,6 +8,7 @@ import com.onlyoffice.registry.repository.UserRepository;
 import com.onlyoffice.registry.repository.WorkspaceRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.TransactionException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,11 @@ public class BasicUserService implements UserService {
     private final UserRepository userRepository;
     private final WorkspaceRepository workspaceRepository;
 
-    @Override
-    @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
+    @Transactional(
+            isolation = Isolation.SERIALIZABLE,
+            rollbackFor = {TransactionException.class, RuntimeException.class},
+            timeout = 2
+    )
     public UserDTO saveUser(UserDTO user, WorkspaceID workspaceID) {
         User u = UserMapper.INSTANCE.toEntity(user);
         u.setWorkspace(this.workspaceRepository.getById(workspaceID));
@@ -36,8 +40,11 @@ public class BasicUserService implements UserService {
         return user;
     }
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 3)
+    @Transactional(
+            isolation = Isolation.READ_UNCOMMITTED,
+            rollbackFor = {TransactionException.class},
+            timeout = 2
+    )
     @Cacheable("users")
     public UserDTO getUser(String userID, WorkspaceID workspaceID) {
         log.debug("trying to get user with workspace id = {} and user id = {}", workspaceID.getWorkspaceId(), userID);
@@ -48,8 +55,11 @@ public class BasicUserService implements UserService {
         return UserMapper.INSTANCE.toDto(user);
     }
 
-    @Override
-    @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
+    @Transactional(
+            isolation = Isolation.SERIALIZABLE,
+            rollbackFor = {TransactionException.class, RuntimeException.class},
+            timeout = 3
+    )
     @CacheEvict("users")
     public void deleteUser(String userID, WorkspaceID workspaceID) {
         log.debug("trying to delete user with workspace id = {} and user id = {}", workspaceID.getWorkspaceId(), userID);

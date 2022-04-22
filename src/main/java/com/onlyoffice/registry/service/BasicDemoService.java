@@ -4,8 +4,11 @@ import com.onlyoffice.registry.dto.DemoInfoDTO;
 import com.onlyoffice.registry.model.Demo;
 import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.repository.DemoRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.TransactionException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,13 +17,17 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class BasicDemoService implements DemoService {
     private final DemoRepository demoRepository;
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 4)
+    @Transactional(
+            isolation = Isolation.READ_UNCOMMITTED,
+            rollbackFor = {TransactionException.class},
+            timeout = 2
+    )
+    @Cacheable("demo")
     public DemoInfoDTO getDemoInfo(WorkspaceID id) {
         log.debug("trying to get demo info for workspace of type: {} with id: {}", id.getWorkspaceType(), id.getWorkspaceId());
         Optional<Demo> demo = this.demoRepository.findById(id);
@@ -38,8 +45,12 @@ public class BasicDemoService implements DemoService {
                 .build();
     }
 
-    @Override
-    @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 4)
+    @Transactional(
+            isolation = Isolation.SERIALIZABLE,
+            rollbackFor = {TransactionException.class, RuntimeException.class},
+            timeout = 2
+    )
+    @CacheEvict("demo")
     public Demo createDemo(WorkspaceID id) {
         log.debug("trying to create a new demo: {}-{}", id.getWorkspaceType(), id.getWorkspaceId());
         Demo demo = Demo

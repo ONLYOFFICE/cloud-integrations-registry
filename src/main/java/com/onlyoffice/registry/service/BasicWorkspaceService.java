@@ -7,6 +7,7 @@ import com.onlyoffice.registry.model.embeddable.WorkspaceID;
 import com.onlyoffice.registry.repository.WorkspaceRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.TransactionException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicWorkspaceService implements WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
 
-    @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 3)
+    @Transactional(
+            isolation = Isolation.READ_UNCOMMITTED,
+            rollbackFor = {TransactionException.class},
+            timeout = 2
+    )
     @Cacheable("workspaces")
     public WorkspaceDTO getWorkspace(WorkspaceID workspaceID) {
         log.debug("trying to get workspace of type: {} with id: {}", workspaceID.getWorkspaceType(), workspaceID.getWorkspaceId());
@@ -28,7 +33,11 @@ public class BasicWorkspaceService implements WorkspaceService {
                 .orElseThrow(() -> new RuntimeException("Could not get: Workspace with this id and type does not exist")));
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE, timeout = 3)
+    @Transactional(
+            isolation = Isolation.SERIALIZABLE,
+            rollbackFor = {TransactionException.class, RuntimeException.class},
+            timeout = 2
+    )
     public WorkspaceDTO saveWorkspace(String workspaceTypeName, WorkspaceDTO workspaceDTO) {
         log.debug("trying to save workspace of type = {} with id = {}", workspaceTypeName, workspaceDTO.getId());
         Workspace workspace = WorkspaceMapper.INSTANCE.toEntity(workspaceDTO);
@@ -39,7 +48,11 @@ public class BasicWorkspaceService implements WorkspaceService {
         return workspaceDTO;
     }
 
-    @Transactional(timeout = 3)
+    @Transactional(
+            isolation = Isolation.SERIALIZABLE,
+            rollbackFor = {TransactionException.class, RuntimeException.class},
+            timeout = 3
+    )
     @CacheEvict("workspaces")
     public void deleteWorkspace(WorkspaceID workspaceID) {
         log.debug("trying to delete workspace of type: {} with id: {}", workspaceID.getWorkspaceType(), workspaceID.getWorkspaceId());
@@ -50,7 +63,11 @@ public class BasicWorkspaceService implements WorkspaceService {
         }
     }
 
-    @Transactional(timeout = 3)
+    @Transactional(
+            isolation = Isolation.SERIALIZABLE,
+            rollbackFor = {TransactionException.class, RuntimeException.class},
+            timeout = 3
+    )
     @CacheEvict("workspaces")
     public void deleteAllWorkspacesByType(String workspaceTypeName) {
         try {

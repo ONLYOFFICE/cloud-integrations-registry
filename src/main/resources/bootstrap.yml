@@ -1,10 +1,14 @@
+resilience4j.timelimiter:
+  instances:
+    queryTimeoutLimiter:
+      timeoutDuration: 1s
+      cancelRunningFuture: true
+
 resilience4j.ratelimiter:
   instances:
-    registryLimiter:
-      timeoutDuration: 1000ms
-      limitRefreshPeriod: 1500ms
-      limitForPeriod: 1000
+    registryRateLimiter:
+      limitRefreshPeriod: 1s
+      limitForPeriod: 360
     workspaceTypeLimiter:
-      timeoutDuration: 1000ms
-      limitRefreshPeriod: 1500ms
-      limitForPeriod: 10000
+      limitRefreshPeriod: 1s
+      limitForPeriod: 360
