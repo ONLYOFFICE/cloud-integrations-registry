@@ -8,8 +8,6 @@ import com.onlyoffice.registry.repository.DemoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.TransactionException;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +25,6 @@ public class BasicDemoService implements DemoService {
             isolation = Isolation.READ_UNCOMMITTED,
             readOnly = true
     )
-    @Cacheable("demo")
     public DemoInfoDTO getDemoInfo(WorkspaceID id) {
         log.debug("trying to get demo info for workspace of type: {} with id: {}", id.getWorkspaceType(), id.getWorkspaceId());
         Optional<Demo> demo = this.demoRepository.findById(id);
@@ -54,7 +51,6 @@ public class BasicDemoService implements DemoService {
             },
             timeout = 2
     )
-    @CacheEvict("demo")
     public Demo createDemo(WorkspaceID id) {
         log.debug("trying to create a new demo: {}-{}", id.getWorkspaceType(), id.getWorkspaceId());
         Demo demo = Demo

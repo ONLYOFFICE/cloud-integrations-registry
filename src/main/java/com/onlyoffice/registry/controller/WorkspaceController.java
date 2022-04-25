@@ -9,6 +9,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +32,9 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
 
     @GetMapping(path = "/{workspaceID}")
-    @Cacheable("workspaces")
     @RateLimiter(name = "queryRateLimiter", fallbackMethod = "getWorkspaceRateFallback")
     @TimeLimiter(name = "queryTimeoutLimiter", fallbackMethod = "getWorkspaceTimeoutFallback")
+    @Cacheable(value = "workspaces", key = "{#workspaceTypeName, #workspaceID}")
     public CompletableFuture<ResponseEntity<WorkspaceDTO>> getWorkspace(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID
@@ -79,7 +80,7 @@ public class WorkspaceController {
                         .success(false)
                         .message(e.getMessage())
                         .build(),
-                HttpStatus.REQUEST_TIMEOUT));
+                HttpStatus.SERVICE_UNAVAILABLE));
     }
     
     @PostMapping
@@ -121,6 +122,7 @@ public class WorkspaceController {
 
     @DeleteMapping(path = "/{workspaceID}")
     @RateLimiter(name = "cleanupRateLimiter", fallbackMethod = "deleteWorkspaceFallback")
+    @CacheEvict(value = "workspaces", key = "{#workspaceTypeName, #workspaceID}")
     public CompletableFuture<ResponseEntity<GenericResponseDTO>> deleteWorkspace(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID

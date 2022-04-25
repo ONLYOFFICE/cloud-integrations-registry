@@ -9,8 +9,6 @@ import com.onlyoffice.registry.repository.WorkspaceRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.TransactionException;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +23,6 @@ public class BasicWorkspaceService implements WorkspaceService {
             isolation = Isolation.READ_UNCOMMITTED,
             readOnly = true
     )
-    @Cacheable("workspaces")
     public WorkspaceDTO getWorkspace(WorkspaceID workspaceID) {
         log.debug("trying to get workspace of type: {} with id: {}", workspaceID.getWorkspaceType(), workspaceID.getWorkspaceId());
         return WorkspaceMapper.INSTANCE.toDTO(this.workspaceRepository
@@ -61,7 +58,6 @@ public class BasicWorkspaceService implements WorkspaceService {
             },
             timeout = 3
     )
-    @CacheEvict("workspaces")
     public void deleteWorkspace(WorkspaceID workspaceID) {
         log.debug("trying to delete workspace of type: {} with id: {}", workspaceID.getWorkspaceType(), workspaceID.getWorkspaceId());
         if (!this.workspaceRepository.existsById(workspaceID))
@@ -78,7 +74,6 @@ public class BasicWorkspaceService implements WorkspaceService {
             },
             timeout = 3
     )
-    @CacheEvict("workspaces")
     public void deleteAllWorkspacesByType(String workspaceTypeName) {
         log.debug("trying to remove all workspaces of type: {}", workspaceTypeName);
         this.workspaceRepository.deleteAllByIdWorkspaceType(workspaceTypeName);

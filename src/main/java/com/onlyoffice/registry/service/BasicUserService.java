@@ -10,8 +10,6 @@ import com.onlyoffice.registry.repository.WorkspaceRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.TransactionException;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +47,6 @@ public class BasicUserService implements UserService {
             isolation = Isolation.READ_UNCOMMITTED,
             readOnly = true
     )
-    @Cacheable("users")
     public UserDTO getUser(String userID, WorkspaceID workspaceID) {
         log.debug("trying to get user with workspace id = {} and user id = {}", workspaceID.getWorkspaceId(), userID);
         User user = this.userRepository
@@ -67,7 +64,6 @@ public class BasicUserService implements UserService {
             },
             timeout = 3
     )
-    @CacheEvict("users")
     public void deleteUser(String userID, WorkspaceID workspaceID) {
         log.debug("trying to delete user with workspace id = {} and user id = {}", workspaceID.getWorkspaceId(), userID);
         this.userRepository.deleteUserByUserIdAndWorkspaceId(userID, workspaceID);

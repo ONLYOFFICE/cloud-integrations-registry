@@ -9,6 +9,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class UserController {
     @GetMapping("/{userID}")
     @RateLimiter(name = "queryRateLimiter", fallbackMethod = "getUserRateFallback")
     @TimeLimiter(name = "queryTimeoutLimiter", fallbackMethod = "getUserTimeoutFallback")
-    @Cacheable("users")
+    @Cacheable(value = "users", key = "{#workspaceTypeName, #workspaceID, #userID}")
     public CompletableFuture<ResponseEntity<UserDTO>> getUser(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID,
@@ -83,7 +84,7 @@ public class UserController {
                         .success(false)
                         .message(e.getMessage())
                         .build(),
-                HttpStatus.REQUEST_TIMEOUT));
+                HttpStatus.SERVICE_UNAVAILABLE));
     }
 
     @PostMapping
@@ -127,6 +128,7 @@ public class UserController {
 
     @DeleteMapping("/{userID}")
     @RateLimiter(name = "cleanupRateLimiter", fallbackMethod = "deleteUserFallback")
+    @CacheEvict(value = "users", key = "{#workspaceTypeName, #workspaceID, #userID}")
     public CompletableFuture<ResponseEntity<GenericResponseDTO>> deleteUser(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID,

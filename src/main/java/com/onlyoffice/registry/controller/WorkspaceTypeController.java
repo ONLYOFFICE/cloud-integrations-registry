@@ -4,6 +4,7 @@ import com.onlyoffice.registry.dto.GenericResponseDTO;
 import com.onlyoffice.registry.service.WorkspaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class WorkspaceTypeController {
     private final WorkspaceService workspaceService;
+    private final CacheManager cacheManager;
 
     @DeleteMapping(path = "/{workspaceTypeName}")
     public CompletableFuture<ResponseEntity<GenericResponseDTO>> deleteWorkspaceType(
@@ -26,6 +28,7 @@ public class WorkspaceTypeController {
         return CompletableFuture.supplyAsync(() -> {
             log.debug("call to delete workspace type with name: {}", workspaceTypeName);
             this.workspaceService.deleteAllWorkspacesByType(workspaceTypeName);
+            cacheManager.getCache("workspaces").clear();
             return ResponseEntity.ok(
                     GenericResponseDTO
                             .builder()

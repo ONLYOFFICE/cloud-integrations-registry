@@ -11,7 +11,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,7 +33,6 @@ public class LicenseController {
     @GetMapping(path = "/demo")
     @RateLimiter(name = "queryRateLimiter", fallbackMethod = "checkDemoRateFallback")
     @TimeLimiter(name = "queryTimeoutLimiter", fallbackMethod = "checkDemoTimeoutFallback")
-    @Cacheable("demo")
     public CompletableFuture<ResponseEntity<DemoInfoDTO>> checkDemo(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID
@@ -71,7 +70,7 @@ public class LicenseController {
                         .success(false)
                         .message(e.getMessage())
                         .build(),
-                HttpStatus.REQUEST_TIMEOUT));
+                HttpStatus.SERVICE_UNAVAILABLE));
     }
 
     @PostMapping(path = "/demo")
@@ -109,6 +108,7 @@ public class LicenseController {
 
     @PostMapping(path = "/license")
     @RateLimiter(name = "commandRateLimiter", fallbackMethod = "updateLicenseFallback")
+    @CacheEvict(value = "workspaces", key = "{#workspaceTypeName, #workspaceID}")
     public CompletableFuture<ResponseEntity<GenericResponseDTO>> updateLicenseCredentials(
             @PathVariable("workspaceTypeName") String workspaceTypeName,
             @PathVariable("workspaceID") String workspaceID,
