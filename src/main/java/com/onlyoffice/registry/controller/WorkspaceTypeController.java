@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("v1/workspace-type")
+@RequestMapping("v1/types")
 @RequiredArgsConstructor
 @Slf4j
 public class WorkspaceTypeController {

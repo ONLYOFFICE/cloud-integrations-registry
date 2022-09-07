@@ -24,7 +24,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-@RequestMapping(path = "v1/workspace/{workspaceTypeName}/{workspaceID}/user")
+@RequestMapping(path = "v1/workspaces/{workspaceTypeName}/{workspaceID}/users")
 @PreAuthorize("hasRole(#workspaceTypeName) or hasRole(@DynamicRoles.getRootRole())")
 @RequiredArgsConstructor
 @Slf4j

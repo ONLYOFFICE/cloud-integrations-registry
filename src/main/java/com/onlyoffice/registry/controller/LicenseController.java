@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 @RestController
-@RequestMapping(path = "v1/workspace/{workspaceTypeName}/{workspaceID}")
+@RequestMapping(path = "v1/workspaces/{workspaceTypeName}/{workspaceID}")
 @PreAuthorize("hasRole(#workspaceTypeName) or hasRole(@DynamicRoles.getRootRole())")
 @RequiredArgsConstructor
 @Slf4j

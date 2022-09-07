@@ -29,8 +29,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.cors().and().authorizeRequests()
-                .mvcMatchers(HttpMethod.POST, "/v1/workspace-type/**").hasRole(dynamicRoles.getRootRole())
-                .mvcMatchers(HttpMethod.DELETE, "/v1/workspace-type/**").hasRole(dynamicRoles.getRootRole())
+                .mvcMatchers(HttpMethod.POST, "/v1/types/**").hasRole(dynamicRoles.getRootRole())
+                .mvcMatchers(HttpMethod.DELETE, "/v1/types/**").hasRole(dynamicRoles.getRootRole())
                 .anyRequest()
                 .authenticated()
                     .and()
